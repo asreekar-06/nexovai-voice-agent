@@ -50,4 +50,70 @@ Requirements: Python 3.10 to 3.12, Node.js 18+, a microphone (use headphones to 
 python -m venv .venv
 .venv\Scripts\activate          # Windows
 # source .venv/bin/activate     # Mac/Linux
-p
+pip install "pipecat-ai[webrtc,silero,elevenlabs,google,runner]" fastapi uvicorn python-dotenv
+
+# 2. API keys
+copy .env.example .env          # Windows (use cp on Mac/Linux)
+# then open .env and fill in your keys
+
+# 3. Dashboard
+cd dashboard
+npm install
+```
+
+`.env` needs:
+
+```
+GOOGLE_API_KEY=
+ELEVENLABS_API_KEY=
+ELEVENLABS_VOICE_ID=21m00Tcm4TlvDq8ikWAM
+```
+
+Keys: Gemini from aistudio.google.com, ElevenLabs from elevenlabs.io (the key needs Speech to Text and Text to Speech access).
+
+## Run
+
+Open three terminals in the project root (activate the venv in the first two).
+
+```bash
+# Terminal 1: voice bot (port 7860)
+python bot.py
+
+# Terminal 2: dashboard API (port 8001)
+python -m uvicorn api:app --port 8001
+
+# Terminal 3: dashboard (port 5173)
+cd dashboard
+npm run dev
+```
+
+Open http://localhost:5173, allow the microphone and press the call button.
+
+## Try it
+
+1. Press call and let the greeting play.
+2. Ask for a doctor or speciality, for example "a cardiologist tomorrow".
+3. Pick a slot and give your name.
+4. Say a 10-digit phone number. The agent reads it back, so say "yes" to confirm.
+5. Watch the slot turn orange on the dashboard.
+6. Call again with the same number and say "cancel my appointment" to free the slot.
+
+## Project structure
+
+```
+bot.py          Pipecat pipeline and system prompt
+tools.py        The 3 agent tools and their schemas
+db.py           SQLite setup and sample data
+api.py          FastAPI endpoints for the dashboard (/doctors, /appointments)
+dashboard/      React + Vite frontend
+test_stt.py     Standalone check of the ElevenLabs STT key
+test_llm.py     Standalone check of the Gemini key
+test_tts.py     Standalone check of the ElevenLabs TTS key
+```
+
+## Notes and limitations
+
+- Runs locally. Gemini free tier has rate limits and ElevenLabs free credits are limited, so keep test calls short.
+- Use headphones. Without them the bot's own voice can leak into the mic and be transcribed as the caller.
+- The phone-number confirmation is enforced through the system prompt. A stricter version would also check a "confirmed" flag inside the tools.
+- Not handled yet: authentication, echo cancellation and simultaneous bookings of the same slot.
